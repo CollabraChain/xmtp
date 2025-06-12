@@ -1,0 +1,27 @@
+{
+  "name": "@collabra/xmtp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx --watch src/index.ts",
+    "lint": "cd ../.. && yarn eslint src",
+    "start": "tsx  index.ts"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "^0.6.2",
+    "@coinbase/agentkit-langchain": "^0.3.0",
+    "@langchain/core": "^0.3.19",
+    "@langchain/langgraph": "^0.2.21",
+    "@langchain/openai": "^0.3.14",
+    "@xmtp/node-sdk": "*"
+  },
+  "devDependencies": {
+    "tsx": "*",
+    "typescript": "*"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
