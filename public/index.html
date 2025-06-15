@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CollabraChain Agent - Socket.IO Client</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        width: 95%;
+        max-width: 800px;
+        height: 90vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .header {
+        background: #4f46e5;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        position: relative;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        margin-bottom: 5px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ef4444;
+      }
+
+      .status-dot.connected {
+        background: #10b981;
+      }
+
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f9fafb;
+      }
+
+      .message {
+        margin-bottom: 15px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        max-width: 80%;
+        word-wrap: break-word;
+      }
+
+      .message.user {
+        background: #4f46e5;
+        color: white;
+        margin-left: auto;
+        text-align: right;
+      }
+
+      .message.agent {
+        background: white;
+        border: 1px solid #e5e7eb;
+        margin-right: auto;
+      }
+
+      .message .sender {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        opacity: 0.8;
+      }
+
+      .message .content {
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+
+      .message .timestamp {
+        font-size: 11px;
+        opacity: 0.6;
+        margin-top: 4px;
+      }
+
+      .input-container {
+        border-top: 1px solid #e5e7eb;
+        padding: 20px;
+        background: white;
+      }
+
+      .input-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+
+      .auth-section {
+        margin-bottom: 15px;
+      }
+
+      .auth-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 25px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      input[type="text"]:focus {
+        border-color: #4f46e5;
+      }
+
+      button {
+        padding: 12px 24px;
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      button:hover {
+        background: #4338ca;
+      }
+
+      button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
+
+      .commands {
+        background: #f3f4f6;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        font-size: 12px;
+      }
+
+      .commands h4 {
+        margin-bottom: 8px;
+        color: #374151;
+      }
+
+      .commands-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 5px;
+      }
+
+      .command {
+        color: #4f46e5;
+        font-family: monospace;
+      }
+
+      .typing-indicator {
+        padding: 10px 16px;
+        color: #6b7280;
+        font-style: italic;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="status">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusText">Disconnected</span>
+        </div>
+        <h1>🏗️ CollabraChain Agent</h1>
+        <p>Decentralized Freelance Project Management</p>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="message agent">
+          <div class="sender">CollabraChain Agent</div>
+          <div class="content">
+            Welcome! I'm your CollabraChain assistant. Type /help to see
+            available commands or just chat naturally about your projects!
+          </div>
+          <div class="timestamp" id="welcomeTime"></div>
+        </div>
+      </div>
+
+      <div class="typing-indicator" id="typingIndicator" style="display: none">
+        Agent is typing...
+      </div>
+
+      <div class="input-container">
+        <div class="commands">
+          <h4>Quick Commands:</h4>
+          <div class="commands-list">
+            <span class="command">/help</span>
+            <span class="command">/create</span>
+            <span class="command">/list</span>
+            <span class="command">/dashboard</span>
+          </div>
+        </div>
+
+        <div class="auth-section">
+          <div class="auth-row">
+            <input
+              type="text"
+              id="userIdInput"
+              placeholder="User ID (optional)" />
+            <input
+              type="text"
+              id="addressInput"
+              placeholder="Wallet Address (optional)" />
+            <button onclick="authenticate()" id="authButton">Connect</button>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <input
+            type="text"
+            id="messageInput"
+            placeholder="Type your message..."
+            disabled />
+          <button onclick="sendMessage()" id="sendButton" disabled>Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Global variables
+      let socket = null;
+      let isAuthenticated = false;
+      let currentUserId = null;
+      let currentConversationId = null;
+
+      // DOM elements
+      const statusDot = document.getElementById("statusDot");
+      const statusText = document.getElementById("statusText");
+      const messages = document.getElementById("messages");
+      const messageInput = document.getElementById("messageInput");
+      const sendButton = document.getElementById("sendButton");
+      const authButton = document.getElementById("authButton");
+      const userIdInput = document.getElementById("userIdInput");
+      const addressInput = document.getElementById("addressInput");
+      const typingIndicator = document.getElementById("typingIndicator");
+
+      // Initialize welcome timestamp
+      document.getElementById("welcomeTime").textContent =
+        new Date().toLocaleTimeString();
+
+      // Socket.IO connection
+      function connect() {
+        socket = io();
+
+        socket.on("connect", () => {
+          updateStatus(true, "Connected");
+          console.log("Connected to server");
+        });
+
+        socket.on("disconnect", () => {
+          updateStatus(false, "Disconnected");
+          isAuthenticated = false;
+          updateUI();
+          console.log("Disconnected from server");
+        });
+
+        socket.on("authenticated", (data) => {
+          if (data.success) {
+            isAuthenticated = true;
+            currentUserId = data.userId;
+            updateStatus(
+              true,
+              `Connected as ${data.userId.substring(0, 8)}...`,
+            );
+            addMessage("system", `Authenticated as ${data.userId}`, new Date());
+          } else {
+            addMessage(
+              "system",
+              `Authentication failed: ${data.error}`,
+              new Date(),
+            );
+          }
+          updateUI();
+        });
+
+        socket.on("agent_message", (data) => {
+          typingIndicator.style.display = "none";
+          addMessage(
+            "agent",
+            data.message.content,
+            new Date(data.message.timestamp),
+          );
+        });
+
+        socket.on("message_received", (data) => {
+          console.log("Message received confirmation:", data);
+          if (!currentConversationId) {
+            currentConversationId = data.conversationId;
+          }
+        });
+
+        socket.on("error", (data) => {
+          addMessage("system", `Error: ${data.message}`, new Date());
+        });
+
+        socket.on("server_shutdown", (data) => {
+          addMessage("system", `Server message: ${data.message}`, new Date());
+        });
+
+        // Ping for connection health
+        setInterval(() => {
+          if (socket?.connected) {
+            socket.emit("ping");
+          }
+        }, 30000);
+
+        socket.on("pong", () => {
+          console.log("Pong received");
+        });
+      }
+
+      function authenticate() {
+        if (!socket?.connected) {
+          alert("Not connected to server");
+          return;
+        }
+
+        const userId = userIdInput.value.trim() || null;
+        const address = addressInput.value.trim() || null;
+
+        socket.emit("authenticate", { userId, address });
+      }
+
+      function sendMessage() {
+        const content = messageInput.value.trim();
+        if (!content || !isAuthenticated) return;
+
+        // Add user message to chat
+        addMessage("user", content, new Date());
+
+        // Show typing indicator
+        typingIndicator.style.display = "block";
+
+        // Send to server
+        socket.emit("user_message", {
+          content,
+          conversationId: currentConversationId,
+          userId: currentUserId,
+        });
+
+        // Clear input
+        messageInput.value = "";
+      }
+
+      function addMessage(sender, content, timestamp) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}`;
+
+        const senderDiv = document.createElement("div");
+        senderDiv.className = "sender";
+        senderDiv.textContent =
+          sender === "user"
+            ? "You"
+            : sender === "agent"
+              ? "CollabraChain Agent"
+              : "System";
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "content";
+        contentDiv.textContent = content;
+
+        const timestampDiv = document.createElement("div");
+        timestampDiv.className = "timestamp";
+        timestampDiv.textContent = timestamp.toLocaleTimeString();
+
+        messageDiv.appendChild(senderDiv);
+        messageDiv.appendChild(contentDiv);
+        messageDiv.appendChild(timestampDiv);
+
+        messages.appendChild(messageDiv);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function updateStatus(connected, text) {
+        statusDot.className = connected ? "status-dot connected" : "status-dot";
+        statusText.textContent = text;
+      }
+
+      function updateUI() {
+        const isConnected = socket?.connected;
+        messageInput.disabled = !isAuthenticated;
+        sendButton.disabled = !isAuthenticated;
+        authButton.disabled = !isConnected || isAuthenticated;
+        authButton.textContent = isAuthenticated ? "Connected" : "Connect";
+      }
+
+      // Event listeners
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // Auto-connect on page load
+      connect();
+      updateUI();
+
+      // Handle page visibility for connection management
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && !socket?.connected) {
+          connect();
+        }
+      });
+    </script>
+  </body>
+</html>

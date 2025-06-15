@@ -5,19 +5,37 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx --watch src/index.ts",
+    "clean": "rm -rf .data/socket .data/wallet",
+    "dev": "tsx --watch socket-server.ts & tsx --watch agent.ts",
+    "dev:agent": "tsx --watch agent.ts",
+    "dev:socket": "tsx --watch socket-server.ts",
     "lint": "cd ../.. && yarn eslint src",
-    "start": "tsx  index.ts"
+    "setup": "tsx config.ts",
+    "start": "tsx socket-server.ts & tsx agent.ts",
+    "start:agent": "tsx agent.ts",
+    "start:socket": "tsx socket-server.ts",
+    "test": "tsx socket-server.ts"
   },
   "dependencies": {
-    "@coinbase/agentkit": "^0.6.2",
+    "@coinbase/agentkit": "^0.8.2",
     "@coinbase/agentkit-langchain": "^0.3.0",
-    "@langchain/core": "^0.3.19",
-    "@langchain/langgraph": "^0.2.21",
-    "@langchain/openai": "^0.3.14",
-    "@xmtp/node-sdk": "*"
+    "@langchain/core": "^0.3.61",
+    "@langchain/langgraph": "^0.3.5",
+    "@langchain/openai": "^0.5.16",
+    "@xmtp/node-sdk": "*",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.0",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "uuid": "^11.1.0",
+    "viem": "^2.31.6",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/uuid": "^10.0.0",
     "tsx": "*",
     "typescript": "*"
   },
