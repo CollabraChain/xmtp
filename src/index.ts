@@ -13,11 +13,11 @@ import {
   getEncryptionKeyFromHex,
   validateEnvironment,
 } from "@helpers/client";
+import { ChatBedrockConverse } from "@langchain/aws";
 import { HumanMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
 import { TransactionReferenceCodec } from "@xmtp/content-type-transaction-reference";
 import {
   ContentTypeWalletSendCalls,
@@ -38,6 +38,9 @@ const {
   NETWORK_ID,
   CDP_API_KEY_ID,
   CDP_API_KEY_SECRET,
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
+  AWS_REGION,
 } = validateEnvironment([
   "WALLET_KEY",
   "ENCRYPTION_KEY",
@@ -45,6 +48,9 @@ const {
   "NETWORK_ID",
   "CDP_API_KEY_ID",
   "CDP_API_KEY_SECRET",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_REGION",
 ]);
 
 // Storage constants
@@ -893,7 +899,14 @@ async function main(): Promise<void> {
   ];
 
   // Create the agent
-  const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
+  const llm = new ChatBedrockConverse({
+    model: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+    region: AWS_REGION,
+    credentials: {
+      accessKeyId: AWS_ACCESS_KEY_ID,
+      secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    },
+  });
   const agent = createReactAgent({
     llm,
     tools: allTools as Parameters<typeof createReactAgent>[0]["tools"],
